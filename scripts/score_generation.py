@@ -1,20 +1,25 @@
+
 """
-Acoustic index scoring for WAV files in ../data/.
-Outputs a CSV with one row per file and 19 acoustic indices as columns.
+Acoustic index scoring for WAV files in ../data/bio/ and ../data/antropo/.
+Outputs scores.csv with one row per file: filename, group (A=antropo, B=bio),
+and 19 acoustic indices. Runs in parallel across files; skips and logs errors.
 """
 
-import os
+import csv
 import glob
+import os
 import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import maad
-from maad import sound, features, util
-import pandas as pd
+from maad import features, sound, util
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
 OUTPUT_CSV = os.path.join(os.path.dirname(__file__), '..', 'scores.csv')
+N_WORKERS = int(os.environ.get('SLURM_CPUS_PER_TASK', 8))
 
 COLUMNS = [
+    'filename', 'group',
     'median', 'tH', 'tActivity', 'ACI', 'fH', 'H_of_avg_spectrum',
     'Kurt_spectral_max', 'Skew_spectral_max', 'LFC', 'MFC', 'HFC',
     'soundscape_index', 'Leq', 'LeqF_from_spectrogram', 'AGI',
@@ -28,12 +33,17 @@ def compute_scores(wav_path):
     Sxx_P, tn, fn, ext = sound.spectrogram(s, fs)
     Sxx_dB = util.power2dB(Sxx_P) + 96
 
-    # Remove stationary background noise before computing spectral indices
     Sxx_dB_noNoise, _, _ = sound.remove_background(Sxx_dB)
     Sxx_A_noNoise = util.dB2amplitude(Sxx_dB_noNoise)
     Sxx_P_noNoise = util.dB2power(Sxx_dB_noNoise)
 
-    row = {}
+    parent = os.path.basename(os.path.dirname(wav_path))
+    group = 'A' if parent == 'antropo' else 'B'
+
+    row = {
+        'filename': os.path.splitext(os.path.basename(wav_path))[0],
+        'group': group,
+    }
     row['median'] = features.temporal_median(s)
     row['tH'] = features.temporal_entropy(s)
     row['tActivity'], _, _ = features.temporal_activity(s, 6)
@@ -65,6 +75,17 @@ def compute_scores(wav_path):
     return row
 
 
+def score_file(wav_path):
+    t0 = time.time()
+    try:
+        row = compute_scores(wav_path)
+        print(f'OK  {os.path.basename(wav_path)}  ({time.time() - t0:.1f}s)', flush=True)
+        return row
+    except Exception as e:
+        print(f'SKIPPED {wav_path}: {e}', flush=True)
+        return None
+
+
 def main():
     wav_files = sorted(
         glob.glob(os.path.join(DATA_DIR, '**', '*.wav'), recursive=True) +
@@ -75,17 +96,27 @@ def main():
         print(f'No WAV files found in {DATA_DIR}')
         return
 
-    rows = {}
-    for path in wav_files:
-        name = os.path.splitext(os.path.basename(path))[0]
-        print(f'Processing: {name}')
-        t0 = time.time()
-        rows[name] = compute_scores(path)
-        print(f'  done in {time.time() - t0:.1f}s')
+    print(f'Found {len(wav_files)} files. Running with {N_WORKERS} workers.')
 
-    df = pd.DataFrame.from_dict(rows, orient='index', columns=COLUMNS)
-    df.to_csv(OUTPUT_CSV, index=True)
-    print(f'\nSaved {len(rows)} rows to {OUTPUT_CSV}')
+    completed = 0
+    skipped = 0
+
+    with open(OUTPUT_CSV, 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=COLUMNS)
+        writer.writeheader()
+
+        with ProcessPoolExecutor(max_workers=N_WORKERS) as executor:
+            futures = {executor.submit(score_file, p): p for p in wav_files}
+            for future in as_completed(futures):
+                row = future.result()
+                if row is not None:
+                    writer.writerow(row)
+                    csvfile.flush()
+                    completed += 1
+                else:
+                    skipped += 1
+
+    print(f'\nDone. Scored: {completed}, Skipped: {skipped}. Output: {OUTPUT_CSV}')
 
 
 if __name__ == '__main__':
