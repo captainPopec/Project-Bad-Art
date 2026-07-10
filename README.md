@@ -11,3 +11,6 @@ it was a huge thinking progress, most notable breakthrough was the idea to creat
 # Hm but does this makes sense?
 we kind of defeat th epurpose of overall informtion, because I think we argue from the perspective of that part of the bran that determines which stimuli pass and which dont pass into the brain. what is the ame of that?
  Thalamus ofc
+
+# Turns ut it's a bad idea
+IT makes no sense multiplying the base score with verbosity, as I already pointeed out, the verbose data would simply be in a different cluster no matetr what simply due to it's dimensionality difference. So instead of squashing it into just one score, it could be interasting perhaps to leave it as two separate dimensions, x= information y=verbostiy, so I expect 4 quadrants, low information/low verbosity, low information / high verbostiy( althouth this one might be fairly empty), high information /low verbosity, high /high
