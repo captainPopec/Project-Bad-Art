@@ -16,3 +16,5 @@ IT makes no sense multiplying the base score with verbosity, as I already pointe
 
 # Better question, how to apply all this? What for
 Claude answer, does it mamter really, point is its interasting adn perhaps even useless but so what...
+
+its not application I should wporry about its how to improve current state, it doesnt seem to find some huge differences, but I dont think that is true in reality. i think it snot the inidcators its is the type of data he chose to use. That is what is problem. FOR SURE. Because when I chose by hand the differejce was obvious and it was huge. Now I dont know its small as fuck and debatable.
