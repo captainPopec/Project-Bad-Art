@@ -18,3 +18,5 @@ IT makes no sense multiplying the base score with verbosity, as I already pointe
 Claude answer, does it mamter really, point is its interasting adn perhaps even useless but so what...
 
 its not application I should wporry about its how to improve current state, it doesnt seem to find some huge differences, but I dont think that is true in reality. i think it snot the inidcators its is the type of data he chose to use. That is what is problem. FOR SURE. Because when I chose by hand the differejce was obvious and it was huge. Now I dont know its small as fuck and debatable. Ask gpt to summarize which kinds of sounds were used in last test
+e moj narodeeee,  publish it boli te kuracm ko ih jebe ja sam svoje obavio kuzis
+samo treba trazit pare od njeamca prije nego sta prestanem bit sutendt ovdje
